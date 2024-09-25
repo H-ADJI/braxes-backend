@@ -1,42 +1,15 @@
 package main
 
 import (
-	"html/template"
+	"github.com/braxes-backend/cmd"
 	"log"
 	"net/http"
 )
 
-type Order struct {
-	Id         int    `json:"id"`
-	Name       string `json:"name"`
-	IsPrepared bool   `json:"isPrepared"`
-}
-
-var todos = []Order{
-	{Id: 1, Name: "machine a laver", IsPrepared: false},
-	{Id: 2, Name: "laptop comme neuf", IsPrepared: false},
-	{Id: 3, Name: "voiture", IsPrepared: true},
-}
-
-var templates map[string]*template.Template
-
-// Load templates on program initialisation
-// https://www.digitalocean.com/community/tutorials/understanding-init-in-go
-func init() {
-	if templates == nil {
-		templates = make(map[string]*template.Template)
-	}
-
-	templates["index.html"] = template.Must(template.ParseFiles("index.html"))
-}
-
-// handlers
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := templates["index.html"]
-	tmpl.ExecuteTemplate(w, "index.html", nil)
-}
-
 func main() {
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/", cmd.IndexHandler)
+	http.HandleFunc("/orders", cmd.ListOrders)
+	http.HandleFunc("/history", cmd.OrdersHistory)
+	http.HandleFunc("/orders/{id}", cmd.OrderDetails)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
