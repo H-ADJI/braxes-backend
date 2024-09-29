@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - name: orders
+    engine: "sqlite"
+    queries: "./database/orders/sql/query.sql"
+    schema: "./database/orders/sql/schema.sql"
+    gen:
+      go:
+        out: "./database/orders"
+        emit_json_tags: true
