@@ -1,15 +1,27 @@
 package main
 
 import (
-	"github.com/braxes-backend/cmd"
-	"log"
-	"net/http"
+	_ "embed"
+
+	"github.com/braxes-backend/app/handlers"
+	"github.com/braxes-backend/database"
+	"github.com/gofiber/fiber/v2"
+	_ "github.com/mattn/go-sqlite3"
 )
 
+//go:embed database/orders/sql/schema.sql
+var ordersDDL string
+
 func main() {
-	http.HandleFunc("/", cmd.IndexHandler)
-	http.HandleFunc("/orders", cmd.ListOrders)
-	http.HandleFunc("/history", cmd.OrdersHistory)
-	http.HandleFunc("/orders/{id}", cmd.OrderDetails)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	database.Connect()
+	database.DB.Exec(ordersDDL)
+	ordersRoutes := handlers.InitOrderHanlders()
+	app := fiber.New(fiber.Config{
+		ServerHeader: "braxes-backend",
+		AppName:      "braxesApiv0.0.1",
+	})
+	// mount sub-routers
+	app.Mount("/orders", ordersRoutes)
+	app.Listen(":3000")
+
 }
