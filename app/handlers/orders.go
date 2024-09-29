@@ -47,6 +47,7 @@ func ListOrders(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)
 	orders, err := q.GetAllOrders(dbCTX)
 	if err != nil {
+		log.Error(err)
 		return fiber.ErrInternalServerError
 	}
 	ordersResp := make([]respOrder, 0)
