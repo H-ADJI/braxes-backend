@@ -9,10 +9,11 @@ RUN go mod download
 # Copy the source code
 COPY . .
 # Build the Go application
+# TODO: add cache for quicker builds locally ?
 RUN CGO_ENABLED=1 GOOS=linux go build -o api -a -ldflags '-linkmode external -extldflags "-static"' .
 
 # Stage 2: Final stage
-FROM alpine:latest
+FROM scratch
 WORKDIR  /
 COPY --from=build /src/api .
 ENTRYPOINT ["/api"]
