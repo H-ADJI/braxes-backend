@@ -1,0 +1,17 @@
+services:
+  api:
+    container_name: api
+    build: .
+    # networks:
+    #   - backend
+    ports:
+      - 3000:3000
+    environment:
+      SQLITE_DATA: /data
+      IS_PROD: 1
+    volumes:
+      - db-data:/data
+volumes:
+  db-data:
+# networks:
+#   backend:
