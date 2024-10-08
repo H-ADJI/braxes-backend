@@ -5,12 +5,10 @@ on:
       - main
     tags:
       - "v*"
-permissions:
-  contents: read
-  packages: write
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
