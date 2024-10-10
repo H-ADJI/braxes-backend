@@ -1,6 +1,7 @@
 # Stage 1: Build stage
 FROM golang:1.23-alpine AS build
 RUN apk add --no-cache build-base=0.5-r3
+EXPOSE 3000
 # Set the working directory
 WORKDIR /src
 
