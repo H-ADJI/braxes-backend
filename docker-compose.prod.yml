@@ -4,26 +4,33 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker"
-      # - "--providers.docker.exposedbydefault=false"
-      # - "--entryPoints.websecure.address=:443"
-      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      # - "--certificatesresolvers.myresolver.acme.email=elliott@zenful.cloud"
-      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=khalil@centreize.tech"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       # - "--entrypoints.web.address=:80"
       # - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       # - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     ports:
-      - "80:80"
+      # - "80:80"
       - "8080:8080"
       - "443:443"
     volumes:
-      # - letsencrypt:/letsencrypt
+      - letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock
   api:
     image: ghcr.io/h-adji/braxes-api:prod
+    deploy:
+      mode: replicated
+      replicas: 4
     restart: always
     labels:
+      - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`centreize.tech`)"
+      - "traefik.http.routers.guestbook.entrypoints=websecure"
+      - "traefik.http.routers.guestbook.tls.certresolver=myresolver"
+      # - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - 127.0.0.1:3000:3000
     environment:
@@ -33,3 +40,4 @@ services:
       - db-data:/data
 volumes:
   db-data:
+  letsencrypt:
