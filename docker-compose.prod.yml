@@ -31,8 +31,8 @@ services:
       - "traefik.http.routers.guestbook.entrypoints=websecure"
       - "traefik.http.routers.guestbook.tls.certresolver=myresolver"
       # - "com.centurylinklabs.watchtower.enable=true"
-    ports:
-      - 127.0.0.1:3000:3000
+    # ports:
+    #   - 127.0.0.1:3000:3000
     environment:
       SQLITE_DATA: /data
       IS_PROD: 1
