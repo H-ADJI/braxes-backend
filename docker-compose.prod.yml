@@ -34,12 +34,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - braxes-network
+    restart: on-failure
   api:
     image: ghcr.io/h-adji/braxes-api:prod
     deploy:
       mode: replicated
       replicas: 2
-    # restart: always
+    restart: on-failure
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`centreize.tech`)"
