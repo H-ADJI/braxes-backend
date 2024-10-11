@@ -59,4 +59,4 @@ volumes:
   db-data:
   letsencrypt:
 networks:
-  - braxes-network:
+  braxes-network:
