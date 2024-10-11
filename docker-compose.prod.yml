@@ -58,4 +58,5 @@ services:
 volumes:
   db-data:
   letsencrypt:
-network_mode: braxes-network
+networks:
+  - braxes-network
