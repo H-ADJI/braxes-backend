@@ -10,6 +10,8 @@ services:
       - ./.prod.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - braxes-network
   reverse-proxy:
     image: traefik:v3.1
     command:
@@ -30,6 +32,8 @@ services:
     volumes:
       - letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - braxes-network
   api:
     image: ghcr.io/h-adji/braxes-api:prod
     deploy:
@@ -49,6 +53,9 @@ services:
       IS_PROD: 1
     volumes:
       - db-data:/data
+    networks:
+      - braxes-network
 volumes:
   db-data:
   letsencrypt:
+network_mode: braxes-network
