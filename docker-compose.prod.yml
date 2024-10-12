@@ -5,7 +5,7 @@ services:
       - "--label-enable"
       - "--rolling-restart"
       - "--interval"
-      - "30"
+      - "180"
     env_file:
       - ./.prod.env
     volumes:
@@ -39,7 +39,7 @@ services:
     image: ghcr.io/h-adji/braxes-api:prod
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 4
     restart: on-failure
     labels:
       - "traefik.enable=true"
