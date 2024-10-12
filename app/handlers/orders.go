@@ -34,7 +34,7 @@ func InitOrderHanlders() *fiber.App {
 	handler.Use(middleware.InjectDB(orderQueries, dbCTX))
 	handler.Get("", ListOrders)
 	handler.Post("", AddOrder)
-	handler.Get("/histori", OrdersHistory)
+	handler.Get("/history", OrdersHistory)
 	handler.Get("/unprocessed", ListUnprocessed)
 	handler.Get("/processed", ListProcessed)
 	handler.Patch("/unprocess/:id", UnProcessOrder)
