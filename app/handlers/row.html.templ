@@ -1,0 +1,26 @@
+package handlers
+
+import (
+	"fmt"
+	"time"
+)
+
+var S = fmt.Sprint
+
+func prettyDate(unixTime int64) string {
+	t := time.Unix(unixTime, 0)
+	formated := t.Format("15:04 - 01/02 ")
+	return formated
+}
+
+templ ordersTableRows(orders []RespOrder) {
+	for _, order := range orders {
+		<tr product-id={ S(order.PlatformID) }>
+			<td>{ S(order.OrderNumber) }</td>
+			<td>{ prettyDate(order.CreationDate) }</td>
+			<td>{ order.CustomerName }</td>
+			<td>{ S(order.TotalPrice ) + "€" }</td>
+			<td>{  }</td>
+		</tr>
+	}
+}

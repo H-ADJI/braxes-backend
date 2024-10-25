@@ -1,0 +1,65 @@
+package handlers
+
+// templ modalDetails(totalPrice float64, shippingInfo shipping, items []item) {
+templ modalDetails(totalPrice string, s shipping, c customer) {
+	<!-- templ modalDetails() { -->
+	<div class="container">
+		<!-- Order Summary (Columns) -->
+		<div class="order-summary">
+			<h2>Order Summary</h2>
+			<!-- Grid Layout for Summary Info (4 Columns) -->
+			<div class="grid">
+				<!-- Column 1: Total Price -->
+				<div>
+					<p><strong>Total Price:</strong> { totalPrice }</p>
+				</div>
+				<!-- Column 2: Delivery Price -->
+				<div>
+					<p><strong>Delivery Price:</strong> { s.deliveryPrice }</p>
+				</div>
+				<!-- Column 3: Delivery Address -->
+				<div>
+					<p><strong>Delivery Address:</strong> { s.deliveryAddress }</p>
+				</div>
+				<!-- Column 4: Buyer Information -->
+				<div>
+					<p><strong>Client Information:</strong></p>
+					<p><strong>- Name:</strong> { c.name }</p>
+					<p><strong>- Phone:</strong> { c.phone }</p>
+				</div>
+			</div>
+		</div>
+		<!-- Products List (Scrollable) -->
+		<div class="products-list">
+			<!-- Product 1 -->
+			<div class="product">
+				<img src="https://via.placeholder.com/150" alt="Product Image"/>
+				<div class="details">
+					<h3>Product Name: Awesome Widget</h3>
+					<div class="grid">
+						<p><strong>Quantity:</strong> 2</p>
+						<p><strong>Price:</strong> $100</p>
+					</div>
+				</div>
+			</div>
+			<!-- Product 2 -->
+			<div class="product">
+				<img src="https://via.placeholder.com/150" alt="Product Image"/>
+				<div class="details">
+					<h3>Product Name: Super Gadget</h3>
+					<div class="grid">
+						<p><strong>Quantity:</strong> 1</p>
+						<p><strong>Price:</strong> $150</p>
+					</div>
+				</div>
+			</div>
+			<!-- Add more products as needed -->
+		</div>
+	</div>
+	<!-- for _, order := range orders { -->
+	<!-- 	<tr product-id={ S(order.Id) }> -->
+	<!-- 		<td>{ S(order.PlatformID) }</td> -->
+	<!-- 		<td>{ prettyDate(order.CreationDate) }</td> -->
+	<!-- 	</tr> -->
+	<!-- } -->
+}
