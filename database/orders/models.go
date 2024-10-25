@@ -10,8 +10,11 @@ import (
 
 type Order struct {
 	ID            int64         `json:"id"`
-	PlatformID    int64         `json:"platform_id"`
+	PlatformID    string        `json:"platform_id"`
+	OrderNumber   int64         `json:"order_number"`
 	IsProcessed   int64         `json:"is_processed"`
+	TotalPrice    float64       `json:"total_price"`
+	CustomerName  string        `json:"customer_name"`
 	ProcessedDate sql.NullInt64 `json:"processed_date"`
 	CreationDate  int64         `json:"creation_date"`
 }

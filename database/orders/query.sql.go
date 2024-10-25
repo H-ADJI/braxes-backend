@@ -12,32 +12,53 @@ import (
 
 const addOrder = `-- name: AddOrder :one
 INSERT INTO
-    orders (platform_id, creation_date)
+    orders (
+        order_number,
+        platform_id,
+        creation_date,
+        total_price,
+        customer_name
+    )
 VALUES
-    (?, ?) RETURNING id, platform_id, is_processed, processed_date, creation_date
+    (?, ?, ?, ?, ?) RETURNING id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 `
 
 type AddOrderParams struct {
-	PlatformID   int64 `json:"platform_id"`
-	CreationDate int64 `json:"creation_date"`
+	OrderNumber  int64   `json:"order_number"`
+	PlatformID   string  `json:"platform_id"`
+	CreationDate int64   `json:"creation_date"`
+	TotalPrice   float64 `json:"total_price"`
+	CustomerName string  `json:"customer_name"`
 }
 
 // CREATE TABLE orders (
 //
 //	id INTEGER PRIMARY KEY,
-//	platform_id INTEGER UNIQUE NOT NULL,
-//	is_processed INTEGER DEFAULT 0,
-//	processed_date INTEGER DEFAULT 0,
-//	creation_date INTEGER
+//	platform_id TEXT UNIQUE NOT NULL,
+//	order_number INTEGER UNIQUE NOT NULL,
+//	is_processed INTEGER DEFAULT 0 NOT NULL,
+//	total_price REAL NOT NULL,
+//	customer_name TEXT,
+//	processed_date INTEGER,
+//	creation_date INTEGER NOT NULL
 //
 // );
 func (q *Queries) AddOrder(ctx context.Context, arg AddOrderParams) (Order, error) {
-	row := q.db.QueryRowContext(ctx, addOrder, arg.PlatformID, arg.CreationDate)
+	row := q.db.QueryRowContext(ctx, addOrder,
+		arg.OrderNumber,
+		arg.PlatformID,
+		arg.CreationDate,
+		arg.TotalPrice,
+		arg.CustomerName,
+	)
 	var i Order
 	err := row.Scan(
 		&i.ID,
 		&i.PlatformID,
+		&i.OrderNumber,
 		&i.IsProcessed,
+		&i.TotalPrice,
+		&i.CustomerName,
 		&i.ProcessedDate,
 		&i.CreationDate,
 	)
@@ -57,7 +78,7 @@ func (q *Queries) DeleteAuthor(ctx context.Context, id int64) error {
 
 const getAllOrders = `-- name: GetAllOrders :many
 SELECT
-    id, platform_id, is_processed, processed_date, creation_date
+    id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 FROM
     orders
 `
@@ -74,7 +95,10 @@ func (q *Queries) GetAllOrders(ctx context.Context) ([]Order, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlatformID,
+			&i.OrderNumber,
 			&i.IsProcessed,
+			&i.TotalPrice,
+			&i.CustomerName,
 			&i.ProcessedDate,
 			&i.CreationDate,
 		); err != nil {
@@ -93,7 +117,7 @@ func (q *Queries) GetAllOrders(ctx context.Context) ([]Order, error) {
 
 const getAllOrdersDescDate = `-- name: GetAllOrdersDescDate :many
 SELECT
-    id, platform_id, is_processed, processed_date, creation_date
+    id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 FROM
     orders
 ORDER BY
@@ -112,7 +136,10 @@ func (q *Queries) GetAllOrdersDescDate(ctx context.Context) ([]Order, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlatformID,
+			&i.OrderNumber,
 			&i.IsProcessed,
+			&i.TotalPrice,
+			&i.CustomerName,
 			&i.ProcessedDate,
 			&i.CreationDate,
 		); err != nil {
@@ -131,7 +158,7 @@ func (q *Queries) GetAllOrdersDescDate(ctx context.Context) ([]Order, error) {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, platform_id, is_processed, processed_date, creation_date
+    id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 FROM
     orders
 WHERE
@@ -146,7 +173,10 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.PlatformID,
+		&i.OrderNumber,
 		&i.IsProcessed,
+		&i.TotalPrice,
+		&i.CustomerName,
 		&i.ProcessedDate,
 		&i.CreationDate,
 	)
@@ -155,7 +185,7 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 
 const getProcessedOrders = `-- name: GetProcessedOrders :many
 SELECT
-    id, platform_id, is_processed, processed_date, creation_date
+    id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 FROM
     orders
 WHERE
@@ -177,7 +207,10 @@ func (q *Queries) GetProcessedOrders(ctx context.Context) ([]Order, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlatformID,
+			&i.OrderNumber,
 			&i.IsProcessed,
+			&i.TotalPrice,
+			&i.CustomerName,
 			&i.ProcessedDate,
 			&i.CreationDate,
 		); err != nil {
@@ -196,7 +229,7 @@ func (q *Queries) GetProcessedOrders(ctx context.Context) ([]Order, error) {
 
 const getUnProcessedOrders = `-- name: GetUnProcessedOrders :many
 SELECT
-    id, platform_id, is_processed, processed_date, creation_date
+    id, platform_id, order_number, is_processed, total_price, customer_name, processed_date, creation_date
 FROM
     orders
 WHERE
@@ -218,7 +251,10 @@ func (q *Queries) GetUnProcessedOrders(ctx context.Context) ([]Order, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlatformID,
+			&i.OrderNumber,
 			&i.IsProcessed,
+			&i.TotalPrice,
+			&i.CustomerName,
 			&i.ProcessedDate,
 			&i.CreationDate,
 		); err != nil {
@@ -241,16 +277,16 @@ SET
     is_processed = 1,
     processed_date = ?
 WHERE
-    id = ? RETURNING is_processed
+    platform_id = ? RETURNING is_processed
 `
 
 type ProcessOrderParams struct {
 	ProcessedDate sql.NullInt64 `json:"processed_date"`
-	ID            int64         `json:"id"`
+	PlatformID    string        `json:"platform_id"`
 }
 
 func (q *Queries) ProcessOrder(ctx context.Context, arg ProcessOrderParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, processOrder, arg.ProcessedDate, arg.ID)
+	row := q.db.QueryRowContext(ctx, processOrder, arg.ProcessedDate, arg.PlatformID)
 	var is_processed int64
 	err := row.Scan(&is_processed)
 	return is_processed, err
@@ -262,11 +298,11 @@ SET
     is_processed = 0,
     processed_date = 0
 WHERE
-    id = ? RETURNING is_processed
+    platform_id = ? RETURNING is_processed
 `
 
-func (q *Queries) UnProcessOrder(ctx context.Context, id int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, unProcessOrder, id)
+func (q *Queries) UnProcessOrder(ctx context.Context, platformID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, unProcessOrder, platformID)
 	var is_processed int64
 	err := row.Scan(&is_processed)
 	return is_processed, err

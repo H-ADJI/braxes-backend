@@ -52,6 +52,8 @@ services:
     environment:
       SQLITE_DATA: /data
       IS_PROD: 1
+    env_file:
+      - ./.prod.env
     volumes:
       - db-data:/data
     networks:

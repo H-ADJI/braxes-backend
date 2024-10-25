@@ -10,11 +10,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      # target: builder
     labels:
       - "traefik.http.routers.api.rule=Host(`api.docker.localhost`)"
     ports:
       - 127.0.0.1:3000:3000
+    env_file:
+      - ./.env
     environment:
       SQLITE_DATA: /data
       IS_PROD: 0

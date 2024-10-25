@@ -1,9 +1,14 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,17 +20,37 @@ import (
 )
 
 // var queries *orders.Queries
+const wixAPI = "https://www.wixapis.com/ecom/v1/orders/"
 
 type reqOrder struct {
-	PlatformID int64
+	PlatformID string
 }
-type respOrder struct {
-	Id           int64 `json:"id"`
-	PlatformID   int64 `json:"platformID"`
-	CreationDate int64 `json:"creationDate"`
-	IsProcessed  int64 `json:"isProcessed"`
+type RespOrder struct {
+	Id           int64   `json:"id"`
+	PlatformID   string  `json:"platformID"`
+	TotalPrice   float64 `json:"totalPrice"`
+	CustomerName string  `json:"CustomerName"`
+	OrderNumber  int64   `json:"orderNumber"`
+	CreationDate int64   `json:"creationDate"`
+	IsProcessed  int64   `json:"isProcessed"`
 }
 type _ orders.Order
+
+type shipping struct {
+	deliveryPrice   string
+	deliveryAddress string
+}
+type customer struct {
+	name  string
+	phone string
+}
+type item struct {
+	name     string
+	title    string
+	imageUrl string
+	quantity int8
+	price    float64
+}
 
 func InitOrderHanlders() *fiber.App {
 	orderQueries := orders.New(database.DB)
@@ -37,8 +62,8 @@ func InitOrderHanlders() *fiber.App {
 	handler.Get("/history", OrdersHistory)
 	handler.Get("/unprocessed", ListUnprocessed)
 	handler.Get("/processed", ListProcessed)
-	handler.Patch("/unprocess/:id", UnProcessOrder)
-	handler.Patch("/process/:id", ProcessOrder)
+	handler.Get("/unprocess/:id", UnProcessOrder)
+	handler.Get("/process/:id", ProcessOrder)
 	handler.Post("/placed", OrderPlacedEvent)
 	handler.Get("/:id", OrderDetails)
 	return handler
@@ -50,15 +75,17 @@ func ListOrders(c *fiber.Ctx) error {
 		log.Error(err)
 		return fiber.ErrInternalServerError
 	}
-	ordersResp := make([]respOrder, 0)
+	ordersResp := make([]RespOrder, 0)
 	for _, o := range orders {
 		ordersResp = append(
 			ordersResp,
-			respOrder{
+			RespOrder{
 				Id:           o.ID,
 				PlatformID:   o.PlatformID,
 				CreationDate: o.CreationDate,
 				IsProcessed:  o.IsProcessed,
+				CustomerName: o.CustomerName,
+				TotalPrice:   o.TotalPrice,
 			},
 		)
 	}
@@ -71,40 +98,54 @@ func ListOrders(c *fiber.Ctx) error {
 }
 func ListUnprocessed(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)
+	queries := c.Queries()
+	isJson := queries["json"]
 	orders, err := q.GetUnProcessedOrders(dbCTX)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
-	ordersResp := make([]respOrder, 0)
+	ordersResp := make([]RespOrder, 0)
 	for _, o := range orders {
 		ordersResp = append(
 			ordersResp,
-			respOrder{
+			RespOrder{
 				Id:           o.ID,
 				PlatformID:   o.PlatformID,
+				OrderNumber:  o.OrderNumber,
 				CreationDate: o.CreationDate,
 				IsProcessed:  o.IsProcessed,
+				TotalPrice:   o.TotalPrice,
+				CustomerName: o.CustomerName,
 			},
 		)
 	}
-	json, err := json.Marshal(ordersResp)
-	if err != nil {
-		log.Errorf("json marshal failed, %e \n", err)
-		return fiber.ErrInternalServerError
+	if isJson == "1" {
+		json, err := json.Marshal(ordersResp)
+		if err != nil {
+			log.Errorf("json marshal failed, %e \n", err)
+			return fiber.ErrInternalServerError
+		}
+		return c.Send(json)
 	}
-	return c.Send(json)
+	trs := ordersTableRows(ordersResp)
+	trCTX := context.Background()
+	var bf bytes.Buffer
+	trs.Render(trCTX, &bf)
+	return c.Type("html").Send(bf.Bytes())
 }
 func ListProcessed(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)
+	queries := c.Queries()
+	isJson := queries["json"]
 	orders, err := q.GetProcessedOrders(dbCTX)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
-	ordersResp := make([]respOrder, 0)
+	ordersResp := make([]RespOrder, 0)
 	for _, o := range orders {
 		ordersResp = append(
 			ordersResp,
-			respOrder{
+			RespOrder{
 				Id:           o.ID,
 				PlatformID:   o.PlatformID,
 				CreationDate: o.CreationDate,
@@ -112,12 +153,19 @@ func ListProcessed(c *fiber.Ctx) error {
 			},
 		)
 	}
-	json, err := json.Marshal(ordersResp)
-	if err != nil {
-		log.Errorf("json marshal failed, %e \n", err)
-		return fiber.ErrInternalServerError
+	if isJson == "1" {
+		json, err := json.Marshal(ordersResp)
+		if err != nil {
+			log.Errorf("json marshal failed, %e \n", err)
+			return fiber.ErrInternalServerError
+		}
+		return c.Send(json)
 	}
-	return c.Send(json)
+	trs := ordersTableRows(ordersResp)
+	trCTX := context.Background()
+	var bf bytes.Buffer
+	trs.Render(trCTX, &bf)
+	return c.Type("html").Send(bf.Bytes())
 }
 func AddOrder(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)
@@ -135,7 +183,7 @@ func AddOrder(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "order already exists on DB")
 	}
 	json, _ := json.Marshal(
-		respOrder{
+		RespOrder{
 			Id:           order.ID,
 			PlatformID:   order.PlatformID,
 			CreationDate: order.CreationDate,
@@ -150,11 +198,11 @@ func OrdersHistory(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
-	ordersResp := make([]respOrder, 0)
+	ordersResp := make([]RespOrder, 0)
 	for _, o := range orders {
 		ordersResp = append(
 			ordersResp,
-			respOrder{
+			RespOrder{
 				Id:           o.ID,
 				PlatformID:   o.PlatformID,
 				CreationDate: o.CreationDate,
@@ -170,16 +218,12 @@ func OrdersHistory(c *fiber.Ctx) error {
 	return c.Send(json)
 }
 func ProcessOrder(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		log.Errorf("Cannot parse id from path params,%e\n", err)
-		return fiber.ErrInternalServerError
-	}
+	id := c.Params("id")
 	q, dbCTX := middleware.GetQueryCTX(c)
 	processed, err := q.ProcessOrder(
 		dbCTX,
 		orders.ProcessOrderParams{
-			ProcessedDate: sql.NullInt64{Valid: true, Int64: time.Now().Unix()}, ID: int64(id),
+			ProcessedDate: sql.NullInt64{Valid: true, Int64: time.Now().Unix()}, PlatformID: id,
 		},
 	)
 	if err != nil {
@@ -193,15 +237,11 @@ func ProcessOrder(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 func UnProcessOrder(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		log.Errorf("id cannot be parsed to int, %e\n", err)
-		return fiber.ErrInternalServerError
-	}
+	id := c.Params("id")
 	q, dbCTX := middleware.GetQueryCTX(c)
 	processed, err := q.UnProcessOrder(
 		dbCTX,
-		int64(id),
+		id,
 	)
 	if err != nil {
 		log.Error(err)
@@ -214,24 +254,106 @@ func UnProcessOrder(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 func OrderDetails(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		log.Error("cannot parse id param")
-		return fiber.ErrBadRequest
-	}
-	q, dbCTX := middleware.GetQueryCTX(c)
-	order, err := q.GetOrder(dbCTX, int64(id))
+	id := c.Params("id")
+	// wixKey := os.Getenv("WIX_API_KEY")
+	wixKey := os.Getenv("WIX_API_KEY")
+	wixSiteId := os.Getenv("SITE_ID")
+	wixAccountId := os.Getenv("ACCOUNT_ID")
+	// TODO: add certificates in scratch image
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", wixAPI+id, nil)
 	if err != nil {
 		log.Error(err)
-		return fiber.ErrNotFound
+		return fiber.ErrInternalServerError
 	}
-	resp := respOrder{
-		Id:           order.ID,
-		PlatformID:   order.PlatformID,
-		IsProcessed:  order.IsProcessed,
-		CreationDate: order.CreationDate,
+	req.Header.Add("wix-account-id", wixAccountId)
+	req.Header.Add("wix-site-id", wixSiteId)
+	req.Header.Add("Authorization", wixKey)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err)
+		return fiber.ErrInternalServerError
 	}
-	json, err := json.Marshal(resp)
-	return c.Send(json)
+	defer resp.Body.Close()
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"err": err,
+		})
+	}
+	var ordersDetails map[string]interface{}
+	err = json.Unmarshal(content, &ordersDetails)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"err": err,
+		})
+	}
+	queries := c.Queries()
+	isJson := queries["json"]
+	if isJson == "1" {
+		return c.Status(fiber.StatusOK).JSON(ordersDetails)
+	}
+	order, ok := ordersDetails["order"].(map[string]interface{})
+	if ok == false {
+		log.Error("could not access order value")
+		return fiber.ErrInternalServerError
+	}
+	balanceSummary := order["balanceSummary"].(map[string]interface{})
+	balance := balanceSummary["balance"].(map[string]interface{})
+	price := balance["formattedAmount"].(string)
+	shiippingPrice := order["priceSummary"].(map[string]interface{})["shipping"].(map[string]interface{})["formattedAmount"].(string)
+	shippingInfo := order["shippingInfo"].(map[string]interface{})["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
+	address := shippingInfo["address"].(map[string]interface{})
+	coutry := address["country"].(string)
+	city := address["city"].(string)
+	zipCode := address["postalCode"].(string)
+	addressLine := address["addressLine"].(string)
+	s := shipping{
+		deliveryPrice:   shiippingPrice,
+		deliveryAddress: fmt.Sprintf("%s.\n%s, %s, %s", addressLine, city, zipCode, coutry),
+	}
+	contactDetails := shippingInfo["contactDetails"].(map[string]interface{})
+	firstName := contactDetails["firstName"].(string)
+	lastName := contactDetails["lastName"].(string)
+	phoneNumber := contactDetails["phone"].(string)
+	customer := customer{name: fmt.Sprintf("%s %s", firstName, lastName), phone: phoneNumber}
+	details := modalDetails(price, s, customer)
+	detailsCTX := context.Background()
+	var bf bytes.Buffer
+	details.Render(detailsCTX, &bf)
+	return c.Type("html").Send(bf.Bytes())
 }
-func OrderPlacedEvent(c *fiber.Ctx) error { return nil }
+func OrderPlacedEvent(c *fiber.Ctx) error {
+	q, dbCTX := middleware.GetQueryCTX(c)
+	webhookData := make(map[string]interface{})
+	err := c.BodyParser(&webhookData)
+	if err != nil {
+		log.Error(err)
+		return fiber.ErrBadRequest
+	}
+	data := webhookData["data"].(map[string]interface{})
+	rawDate := data["createdDate"].(string)
+	creationDate, err := time.Parse(time.RFC3339, rawDate)
+	if err != nil {
+		log.Error(err)
+		return fiber.ErrInternalServerError
+	}
+	platformID, _ := data["id"].(string)
+	totalPrice, _ := data["priceSummary"].(map[string]interface{})["total"].(map[string]interface{})["value"].(string)
+	Price, _ := strconv.ParseFloat(totalPrice, 64)
+	firstName, _ := data["contact"].(map[string]interface{})["name"].(map[string]interface{})["first"].(string)
+	lastName, _ := data["contact"].(map[string]interface{})["name"].(map[string]interface{})["last"].(string)
+	orderNumber, _ := strconv.Atoi(data["orderNumber"].(string))
+	if err != nil {
+		log.Error(err)
+		return fiber.ErrInternalServerError
+	}
+	_, err = q.AddOrder(dbCTX, orders.AddOrderParams{
+		PlatformID: platformID, CreationDate: creationDate.Unix(), OrderNumber: int64(orderNumber), TotalPrice: Price, CustomerName: fmt.Sprintf("%s %s", lastName, firstName),
+	})
+	if err != nil {
+		log.Error(err)
+		return fiber.NewError(fiber.StatusBadRequest, "order already exists on DB")
+	}
+	return c.SendStatus(fiber.StatusOK)
+}

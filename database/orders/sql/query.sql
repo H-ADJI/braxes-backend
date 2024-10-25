@@ -1,15 +1,24 @@
 -- CREATE TABLE orders (
 --     id INTEGER PRIMARY KEY,
---     platform_id INTEGER UNIQUE NOT NULL,
---     is_processed INTEGER DEFAULT 0,
---     processed_date INTEGER DEFAULT 0,
---     creation_date INTEGER
+--     platform_id TEXT UNIQUE NOT NULL,
+--     order_number INTEGER UNIQUE NOT NULL,
+--     is_processed INTEGER DEFAULT 0 NOT NULL,
+--     total_price REAL NOT NULL,
+--     customer_name TEXT,
+--     processed_date INTEGER,
+--     creation_date INTEGER NOT NULL
 -- );
 -- name: AddOrder :one
 INSERT INTO
-    orders (platform_id, creation_date)
+    orders (
+        order_number,
+        platform_id,
+        creation_date,
+        total_price,
+        customer_name
+    )
 VALUES
-    (?, ?) RETURNING *;
+    (?, ?, ?, ?, ?) RETURNING *;
 
 
 -- name: GetOrder :one
@@ -69,7 +78,7 @@ SET
     is_processed = 1,
     processed_date = ?
 WHERE
-    id = ? RETURNING is_processed;
+    platform_id = ? RETURNING is_processed;
 
 
 -- name: UnProcessOrder :one
@@ -78,7 +87,7 @@ SET
     is_processed = 0,
     processed_date = 0
 WHERE
-    id = ? RETURNING is_processed;
+    platform_id = ? RETURNING is_processed;
 
 
 -- name: DeleteAuthor :exec
