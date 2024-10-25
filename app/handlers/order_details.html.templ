@@ -1,7 +1,7 @@
 package handlers
 
 // templ modalDetails(totalPrice float64, shippingInfo shipping, items []item) {
-templ modalDetails(totalPrice string, s shipping, c customer) {
+templ modalDetails(totalPrice string, s shipping, c customer, items []item) {
 	<!-- templ modalDetails() { -->
 	<div class="container">
 		<!-- Order Summary (Columns) -->
@@ -32,27 +32,19 @@ templ modalDetails(totalPrice string, s shipping, c customer) {
 		<!-- Products List (Scrollable) -->
 		<div class="products-list">
 			<!-- Product 1 -->
-			<div class="product">
-				<img src="https://via.placeholder.com/150" alt="Product Image"/>
-				<div class="details">
-					<h3>Product Name: Awesome Widget</h3>
-					<div class="grid">
-						<p><strong>Quantity:</strong> 2</p>
-						<p><strong>Price:</strong> $100</p>
+			for _, i := range items {
+				<div class="product">
+					<img src={ i.imageUrl } alt="Product Image"/>
+					<div class="details">
+						<h3>Product Name: { i.title }</h3>
+						<div class="grid">
+							<p><strong>Quantity:</strong> { S(i.quantity) }</p>
+							<p><strong>Price:</strong> { i.price }</p>
+						</div>
 					</div>
 				</div>
-			</div>
+			}
 			<!-- Product 2 -->
-			<div class="product">
-				<img src="https://via.placeholder.com/150" alt="Product Image"/>
-				<div class="details">
-					<h3>Product Name: Super Gadget</h3>
-					<div class="grid">
-						<p><strong>Quantity:</strong> 1</p>
-						<p><strong>Price:</strong> $150</p>
-					</div>
-				</div>
-			</div>
 			<!-- Add more products as needed -->
 		</div>
 	</div>

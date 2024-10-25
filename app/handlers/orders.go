@@ -45,11 +45,10 @@ type customer struct {
 	phone string
 }
 type item struct {
-	name     string
 	title    string
 	imageUrl string
-	quantity int8
-	price    float64
+	quantity float64
+	price    string
 }
 
 func InitOrderHanlders() *fiber.App {
@@ -301,6 +300,53 @@ func OrderDetails(c *fiber.Ctx) error {
 	balanceSummary := order["balanceSummary"].(map[string]interface{})
 	balance := balanceSummary["balance"].(map[string]interface{})
 	price := balance["formattedAmount"].(string)
+	s := getShippingInfo(order)
+	cust := getCustomerInfo(order)
+	items := getOrderItems(order)
+	details := modalDetails(price, s, cust, items)
+	detailsCTX := context.Background()
+	var bf bytes.Buffer
+	details.Render(detailsCTX, &bf)
+	return c.Type("html").Send(bf.Bytes())
+}
+func getOrderItems(order map[string]interface{}) []item {
+	lineItems := order["lineItems"].([]interface{})
+	items := make([]item, 0)
+	for _, i := range lineItems {
+		d := i.(map[string]interface{})
+		name := d["productName"].(map[string]interface{})["original"].(string)
+		catalogRef := d["catalogReference"].(map[string]interface{})
+		image := d["image"].(map[string]interface{})["url"].(string)
+		price := d["price"].(map[string]interface{})["formattedAmount"].(string)
+		variantsOpt, ok := catalogRef["options"]
+		if ok {
+			colorVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Color"]
+			if ok {
+				name = fmt.Sprintf("%s - %s", name, colorVar)
+			}
+
+			sizeVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Size"]
+			if ok {
+				name = fmt.Sprintf("%s - %s", name, sizeVar)
+			}
+		}
+		items = append(
+			items,
+			item{title: name, price: price, imageUrl: image, quantity: d["quantity"].(float64)},
+		)
+	}
+	return items
+}
+func getCustomerInfo(order map[string]interface{}) customer {
+	shippingInfo := order["shippingInfo"].(map[string]interface{})["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
+	contactDetails := shippingInfo["contactDetails"].(map[string]interface{})
+	firstName := contactDetails["firstName"].(string)
+	lastName := contactDetails["lastName"].(string)
+	phoneNumber := contactDetails["phone"].(string)
+	c := customer{name: fmt.Sprintf("%s %s", firstName, lastName), phone: phoneNumber}
+	return c
+}
+func getShippingInfo(order map[string]interface{}) shipping {
 	shiippingPrice := order["priceSummary"].(map[string]interface{})["shipping"].(map[string]interface{})["formattedAmount"].(string)
 	shippingInfo := order["shippingInfo"].(map[string]interface{})["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
 	address := shippingInfo["address"].(map[string]interface{})
@@ -312,16 +358,7 @@ func OrderDetails(c *fiber.Ctx) error {
 		deliveryPrice:   shiippingPrice,
 		deliveryAddress: fmt.Sprintf("%s.\n%s, %s, %s", addressLine, city, zipCode, coutry),
 	}
-	contactDetails := shippingInfo["contactDetails"].(map[string]interface{})
-	firstName := contactDetails["firstName"].(string)
-	lastName := contactDetails["lastName"].(string)
-	phoneNumber := contactDetails["phone"].(string)
-	customer := customer{name: fmt.Sprintf("%s %s", firstName, lastName), phone: phoneNumber}
-	details := modalDetails(price, s, customer)
-	detailsCTX := context.Background()
-	var bf bytes.Buffer
-	details.Render(detailsCTX, &bf)
-	return c.Type("html").Send(bf.Bytes())
+	return s
 }
 func OrderPlacedEvent(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)

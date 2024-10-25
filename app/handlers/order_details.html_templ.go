@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 // templ modalDetails(totalPrice float64, shippingInfo shipping, items []item) {
-func modalDetails(totalPrice string, s shipping, c customer) templ.Component {
+func modalDetails(totalPrice string, s shipping, c customer, items []item) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -95,7 +95,69 @@ func modalDetails(totalPrice string, s shipping, c customer) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></div><!-- Products List (Scrollable) --><div class=\"products-list\"><!-- Product 1 --><div class=\"product\"><img src=\"https://via.placeholder.com/150\" alt=\"Product Image\"><div class=\"details\"><h3>Product Name: Awesome Widget</h3><div class=\"grid\"><p><strong>Quantity:</strong> 2</p><p><strong>Price:</strong> $100</p></div></div></div><!-- Product 2 --><div class=\"product\"><img src=\"https://via.placeholder.com/150\" alt=\"Product Image\"><div class=\"details\"><h3>Product Name: Super Gadget</h3><div class=\"grid\"><p><strong>Quantity:</strong> 1</p><p><strong>Price:</strong> $150</p></div></div></div><!-- Add more products as needed --></div></div><!-- for _, order := range orders { --><!-- \t<tr product-id={ S(order.Id) }> --><!-- \t\t<td>{ S(order.PlatformID) }</td> --><!-- \t\t<td>{ prettyDate(order.CreationDate) }</td> --><!-- \t</tr> --><!-- } -->")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></div><!-- Products List (Scrollable) --><div class=\"products-list\"><!-- Product 1 -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		for _, i := range items {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"product\"><img src=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(i.imageUrl)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `app/handlers/order_details.html.templ`, Line: 37, Col: 26}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" alt=\"Product Image\"><div class=\"details\"><h3>Product Name: ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(i.title)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `app/handlers/order_details.html.templ`, Line: 39, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div class=\"grid\"><p><strong>Quantity:</strong> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(S(i.quantity))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `app/handlers/order_details.html.templ`, Line: 41, Col: 52}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p><strong>Price:</strong> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(i.price)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `app/handlers/order_details.html.templ`, Line: 42, Col: 43}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!-- Product 2 --><!-- Add more products as needed --></div></div><!-- for _, order := range orders { --><!-- \t<tr product-id={ S(order.Id) }> --><!-- \t\t<td>{ S(order.PlatformID) }</td> --><!-- \t\t<td>{ prettyDate(order.CreationDate) }</td> --><!-- \t</tr> --><!-- } -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
