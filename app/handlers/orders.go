@@ -348,17 +348,21 @@ func getCustomerInfo(order map[string]interface{}) customer {
 }
 func getShippingInfo(order map[string]interface{}) shipping {
 	shiippingPrice := order["priceSummary"].(map[string]interface{})["shipping"].(map[string]interface{})["formattedAmount"].(string)
-	shippingInfo := order["shippingInfo"].(map[string]interface{})["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
-	address := shippingInfo["address"].(map[string]interface{})
-	coutry := address["country"].(string)
-	city := address["city"].(string)
-	zipCode := address["postalCode"].(string)
-	addressLine := address["addressLine"].(string)
-	s := shipping{
-		deliveryPrice:   shiippingPrice,
-		deliveryAddress: fmt.Sprintf("%s.\n%s, %s, %s", addressLine, city, zipCode, coutry),
+	shippingInfo, ok := order["shippingInfo"].(map[string]interface{})
+	if ok {
+		logistics := shippingInfo["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
+		address := logistics["address"].(map[string]interface{})
+		coutry := address["country"].(string)
+		city := address["city"].(string)
+		zipCode := address["postalCode"].(string)
+		addressLine := address["addressLine"].(string)
+		s := shipping{
+			deliveryPrice:   shiippingPrice,
+			deliveryAddress: fmt.Sprintf("%s.\n%s, %s, %s", addressLine, city, zipCode, coutry),
+		}
+		return s
 	}
-	return s
+	return shipping{}
 }
 func OrderPlacedEvent(c *fiber.Ctx) error {
 	q, dbCTX := middleware.GetQueryCTX(c)
