@@ -1,7 +1,6 @@
 # Stage 1: Build stage
 FROM golang:1.23-alpine AS builder
-RUN apk update && apk upgrade && apk add --no-cache ca-certificates
-RUN update-ca-certificatesRUN apk add --no-cache build-base=0.5-r3
+RUN apk update && apk upgrade && apk add --no-cache ca-certificates && update-ca-certificates && apk add --no-cache build-base=0.5-r3
 EXPOSE 3000
 # Set the working directory
 WORKDIR /src
