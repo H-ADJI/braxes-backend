@@ -5,7 +5,7 @@ services:
       - "--label-enable"
       - "--rolling-restart"
       - "--interval"
-      - "180"
+      - "10"
     env_file:
       - ./.prod.env
     volumes:
