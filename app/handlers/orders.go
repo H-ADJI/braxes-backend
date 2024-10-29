@@ -338,13 +338,27 @@ func getOrderItems(order map[string]interface{}) []item {
 	return items
 }
 func getCustomerInfo(order map[string]interface{}) customer {
-	shippingInfo := order["shippingInfo"].(map[string]interface{})["logistics"].(map[string]interface{})["shippingDestination"].(map[string]interface{})
-	contactDetails := shippingInfo["contactDetails"].(map[string]interface{})
-	firstName := contactDetails["firstName"].(string)
-	lastName := contactDetails["lastName"].(string)
-	phoneNumber := contactDetails["phone"].(string)
-	c := customer{name: fmt.Sprintf("%s %s", firstName, lastName), phone: phoneNumber}
-	return c
+	shippingInfo, ok := order["shippingInfo"].(map[string]interface{})
+	if ok {
+		logistics, ok := shippingInfo["logistics"].(map[string]interface{})
+		if ok {
+			shippingDestination, ok := logistics["shippingDestination"].(map[string]interface{})
+			if ok {
+				contactDetails, ok := shippingDestination["contactDetails"].(map[string]interface{})
+				if ok {
+					firstName := contactDetails["firstName"].(string)
+					lastName := contactDetails["lastName"].(string)
+					phoneNumber := contactDetails["phone"].(string)
+					c := customer{
+						name:  fmt.Sprintf("%s %s", firstName, lastName),
+						phone: phoneNumber,
+					}
+					return c
+				}
+			}
+		}
+	}
+	return customer{}
 }
 func getShippingInfo(order map[string]interface{}) shipping {
 	shiippingPrice := order["priceSummary"].(map[string]interface{})["shipping"].(map[string]interface{})["formattedAmount"].(string)
