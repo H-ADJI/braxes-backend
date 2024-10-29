@@ -315,21 +315,21 @@ func getOrderItems(order map[string]interface{}) []item {
 	for _, i := range lineItems {
 		d := i.(map[string]interface{})
 		name := d["productName"].(map[string]interface{})["original"].(string)
-		catalogRef := d["catalogReference"].(map[string]interface{})
+		// catalogRef := d["catalogReference"].(map[string]interface{})
 		image := d["image"].(map[string]interface{})["url"].(string)
 		price := d["price"].(map[string]interface{})["formattedAmount"].(string)
-		variantsOpt, ok := catalogRef["options"]
-		if ok {
-			colorVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Color"]
-			if ok {
-				name = fmt.Sprintf("%s - %s", name, colorVar)
-			}
-
-			sizeVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Size"]
-			if ok {
-				name = fmt.Sprintf("%s - %s", name, sizeVar)
-			}
-		}
+		// variantsOpt, ok := catalogRef["options"]
+		// if ok {
+		// 	colorVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Color"]
+		// 	if ok {
+		// 		name = fmt.Sprintf("%s - %s", name, colorVar)
+		// 	}
+		//
+		// 	sizeVar, ok := variantsOpt.(map[string]interface{})["options"].(map[string]interface{})["Size"]
+		// 	if ok {
+		// 		name = fmt.Sprintf("%s - %s", name, sizeVar)
+		// 	}
+		// }
 		items = append(
 			items,
 			item{title: name, price: price, imageUrl: image, quantity: d["quantity"].(float64)},
