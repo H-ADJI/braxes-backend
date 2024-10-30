@@ -20,7 +20,6 @@ templ ordersTableRows(orders []RespOrder) {
 			<td>{ prettyDate(order.CreationDate) }</td>
 			<td>{ order.CustomerName }</td>
 			<td>{ S(order.TotalPrice ) + "€" }</td>
-			<td>{  }</td>
 		</tr>
 	}
 }

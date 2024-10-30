@@ -191,7 +191,7 @@ FROM
 WHERE
     is_processed = 1
 ORDER BY
-    processed_date DESC
+    creation_date DESC
 `
 
 // sorting latest
@@ -235,7 +235,7 @@ FROM
 WHERE
     is_processed = 0
 ORDER BY
-    processed_date ASC
+    creation_date ASC
 `
 
 // sorting oldest

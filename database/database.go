@@ -25,5 +25,6 @@ func Connect() {
 		DB, _ = sql.Open("sqlite3", "/data/db.sqlite3")
 		return
 	}
+	// DB, _ = sql.Open("sqlite3", "dev.db")
 	DB, _ = sql.Open("sqlite3", ":memory:")
 }
