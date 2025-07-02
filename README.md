@@ -19,4 +19,4 @@
 
 ### Frontend
 
-- A plain Javascript electron desktop app that will be running on cheap linux based tablets.
+- A plain Javascript [electron desktop app](https://github.com/H-ADJI/braxes-desktop) that will be running on cheap linux based tablets.
